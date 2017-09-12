@@ -55,10 +55,10 @@ def pcl_callback(pcl_msg):
     cloud = ros_to_pcl(pcl_msg)
     
     # TODO: Statistical Outlier Filtering
-    filt_st = cloud.make_statistical_outlier_filter()
-    filt_st.set_mean_k(20) # TODO: try other values
-    filt_st.set_std_dev_mul_thresh(0.3)
-    filtered_cloud = filt_st.filter()
+    cloud_outlier_filter = cloud.make_statistical_outlier_filter()
+    cloud_outlier_filter.set_mean_k(20) # TODO: try other values
+    cloud_outlier_filter.set_std_dev_mul_thresh(0.3)
+    filtered_cloud = cloud_outlier_filter.filter()
 
     # TODO: Voxel Grid Downsampling
     vox = filtered_cloud.make_voxel_grid_filter()
@@ -75,6 +75,18 @@ def pcl_callback(pcl_msg):
     passthrough.set_filter_limits(axis_min, axis_max)
     # Finally use the filter function to obtain the resultant point cloud. 
     cloud_passthrough = passthrough.filter()
+
+    # TODO: PassThrough Filter 2!
+    passthrough = cloud_passthrough.make_passthrough_filter()
+    filter_axis = 'y'
+    passthrough.set_filter_field_name(filter_axis)
+    axis_min = -0.5 # TODO: try different values 0.76
+    axis_max = 0.5 # 1.1
+    passthrough.set_filter_limits(axis_min, axis_max)
+    # Finally use the filter function to obtain the resultant point cloud. 
+    cloud_passthrough = passthrough.filter()
+
+
 
     # TODO: RANSAC Plane Segmentation
     # Create the segmentation object
@@ -104,7 +116,7 @@ def pcl_callback(pcl_msg):
     # as well as minimum and maximum cluster size (in points)
     # NOTE: These are poor choices of clustering parameters
     # Your task is to experiment and find values that work for segmenting objects.
-    ec.set_ClusterTolerance(0.15) # TODO: try different values (0.05, 50, 500000)
+    ec.set_ClusterTolerance(0.015) # TODO: try different values (0.05, 50, 500000)
     ec.set_MinClusterSize(20)
     ec.set_MaxClusterSize(3000)
     # Search the k-d tree for clusters
