@@ -208,9 +208,9 @@ def pr2_mover(object_list):
 
 
     # Initialize variables
-    dict_list = []
+    dict_list = [] # for yaml fifles
     centroids = [] # to be list of tuples (x, y, z)
-    place_dict = {}
+    place_dict = {} # for dropboxes
 
 
     # Get/Read parameters
@@ -221,7 +221,7 @@ def pr2_mover(object_list):
 
 
     # Parse parameters into individual variables
-    for box in place_param:
+    for box in place_list_param:
         place_dict[ box['name'] ] = box['position']
     
 
@@ -235,23 +235,34 @@ def pr2_mover(object_list):
         object_name = String()
         object_name.data = pick_obj['name']
 
+        # Initialize pose
+        pick_pose = Pose()
+        pick_pose.position.x = 0
+        pick_pose.position.y = 0
+        pick_pose.position.z = 0
+        pick_pose.orientation.x = 0
+        pick_pose.orientation.y = 0
+        pick_pose.orientation.z = 0
+        pick_pose.orientation.w = 0
+
+
         # Get the PointCloud for a given object and obtain it's centroid
         for classified_obj in object_list:
 
             # if an object in the pick list was identified
             if classified_obj.label == object_name.data:
 
-                # Create 'place_pose' for the object
+                # Create 'pick_pose' for the object
                 points_arr = ros_to_pcl(classified_obj.cloud).to_array()
-                pick_pose = np.mean(points_arr, axis=0)[:3]
-                pick_pose = Pose()
-                pick_pose.position.x = np.asscalar(pick_obj_pose[0])
-                pick_pose.position.y = np.asscalar(pick_obj_pose[1])
-                pick_pose.position.z = np.asscalar(pick_obj_pose[2])
+                pick_pose_cenroid= np.mean(points_arr, axis=0)[:3]
+                
+                pick_pose.position.x = np.asscalar(pick_pose_centroid[0])
+                pick_pose.position.y = np.asscalar(pick_pose_centroid[1])
+                pick_pose.position.z = np.asscalar(pick_pose_centroid[2])
 
                 break
 
-        # TODO: Assign the arm to be used for pick_place
+        # Assign the arm to be used for pick_place
         arm_name = String()
         if pick_obj['group'] == 'green':
             arm_name.data = 'right'
@@ -259,15 +270,18 @@ def pr2_mover(object_list):
             arm_name.data = 'left'
 
 
-        # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
-
-        test_scene_num = Int32()
-        test_scene_num.data = 3
-
+        # Create place pose for object
+        place_pose = Pose()
         place_pose.position.x = place_dict[arm_name.data][0]
         place_pose.position.y = place_dict[arm_name.data][1]
         place_pose.position.z = place_dict[arm_name.data][2]
        
+   
+        # Change these depending on the world chosen
+        test_scene_num = Int32()
+        test_scene_num.data = 3
+
+        # Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
         dict_list.append(make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose))
 
 
@@ -278,14 +292,14 @@ def pr2_mover(object_list):
             pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
             # TODO: Insert your message variables to be sent as a service request
-            resp = pick_place_routine(TEST_SCENE_NUM, OBJECT_NAME, WHICH_ARM, PICK_POSE, PLACE_POSE)
+            resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
 
             print ("Response: ",resp.success)
 
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
-    # TODO: Output your request parameters into output yaml file
+    # Output your request parameters into output yaml file
     yaml_filename = "output_" + str(test_scene_num.data) + ".yaml"
     send_to_yaml(yaml_filename, dict_list)
 
