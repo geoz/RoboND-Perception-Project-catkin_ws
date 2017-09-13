@@ -203,9 +203,12 @@ def pcl_callback(pcl_msg):
     except rospy.ROSInterruptException:
         pass
 
+
+
+
+
 # function to load parameters and request PickPlace service
 def pr2_mover(object_list):
-
 
     # Initialize variables
     dict_list = [] # for yaml fifles
@@ -227,13 +230,17 @@ def pr2_mover(object_list):
 
     # TODO: Rotate PR2 in place to capture side tables for the collision map
 
-
+    
     # Loop through the pick list
     for pick_obj in pick_list_param:
     
         # Read pick object name:
         object_name = String()
         object_name.data = pick_obj['name']
+
+        print("Pick item:")
+        print(object_name.data)
+
 
         # Initialize pose
         pick_pose = Pose()
@@ -252,9 +259,12 @@ def pr2_mover(object_list):
             # if an object in the pick list was identified
             if classified_obj.label == object_name.data:
 
+                print("Found item:")
+                print(object_name.data)
+
                 # Create 'pick_pose' for the object
                 points_arr = ros_to_pcl(classified_obj.cloud).to_array()
-                pick_pose_cenroid= np.mean(points_arr, axis=0)[:3]
+                pick_pose_centroid = np.mean(points_arr, axis=0)[:3]
                 
                 pick_pose.position.x = np.asscalar(pick_pose_centroid[0])
                 pick_pose.position.y = np.asscalar(pick_pose_centroid[1])
@@ -275,33 +285,44 @@ def pr2_mover(object_list):
         place_pose.position.x = place_dict[arm_name.data][0]
         place_pose.position.y = place_dict[arm_name.data][1]
         place_pose.position.z = place_dict[arm_name.data][2]
+        place_pose.orientation.x = 0
+        place_pose.orientation.y = 0
+        place_pose.orientation.z = 0
+        place_pose.orientation.w = 0
        
    
-        # Change these depending on the world chosen
+        # TODO: Change these depending on the world chosen
         test_scene_num = Int32()
         test_scene_num.data = 3
 
         # Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
-        dict_list.append(make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose))
+        yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
+        dict_list.append(yaml_dict)
+
+        # Output your request parameters into output yaml file
 
 
         # Wait for 'pick_place_routine' service to come up
         rospy.wait_for_service('pick_place_routine')
 
-        try:
-            pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
+        #try:
+        #    pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
             # TODO: Insert your message variables to be sent as a service request
-            resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
+        #    resp = pick_place_routine(test_scene_num, object_name, arm_name, pick_pose, place_pose)
 
-            print ("Response: ",resp.success)
+        #    print ("Response: ",resp.success)
 
-        except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+        #except rospy.ServiceException, e:
+        #    print "Service call failed: %s"%e
+    
+    print(dict_list)
 
-    # Output your request parameters into output yaml file
+
     yaml_filename = "output_" + str(test_scene_num.data) + ".yaml"
     send_to_yaml(yaml_filename, dict_list)
+    print("Yaml file created")
+
 
 
 if __name__ == '__main__':
@@ -328,6 +349,7 @@ if __name__ == '__main__':
 
     # Initialize color_list
     get_color_list.color_list = []
+
 
     # Spin while node is not shutdown
     while not rospy.is_shutdown():
