@@ -37,11 +37,17 @@ if __name__ == '__main__':
     initial_setup()
     labeled_features = []
 
+    j = 0
+
     for model_name in models:
         spawn_model(model_name)
         print(model_name)
 
-        for i in range(15):
+        print(j)
+        j += 1
+
+        for i in range(20):
+            print(i)
             # make five attempts to get a valid a point cloud then give up
             sample_was_good = False
             try_count = 0
@@ -58,9 +64,14 @@ if __name__ == '__main__':
 
             # Extract histogram features
             chists = compute_color_histograms(sample_cloud, using_hsv=True)
+            # TODO :try rgb too
+            #chists_rgb = compute_color_histograms(sample_cloud, using_hsv=False)
+            
             normals = get_normals(sample_cloud)
             nhists = compute_normal_histograms(normals)
+            # TODO: rgb
             feature = np.concatenate((chists, nhists))
+            #feature = np.concatenate((feature_1, chists_rgb))
             labeled_features.append([feature, model_name])
 
         delete_model()

@@ -51,44 +51,60 @@ def pcl_callback(pcl_msg):
 
 # Exercise-2 TODOs:
 
-    # TODO: Convert ROS msg to PCL data
+    # Convert ROS msg to PCL data
     cloud = ros_to_pcl(pcl_msg)
     
-    # TODO: Statistical Outlier Filtering
+    # Statistical Outlier Filtering
     cloud_outlier_filter = cloud.make_statistical_outlier_filter()
     cloud_outlier_filter.set_mean_k(20) # TODO: try other values
     cloud_outlier_filter.set_std_dev_mul_thresh(0.3)
     filtered_cloud = cloud_outlier_filter.filter()
 
-    # TODO: Voxel Grid Downsampling
+    # TODO: remove this!!!
+    filtered_cloud = cloud
+
+    # Voxel Grid Downsampling
+    # Decrease resolution for faster calculations, but it should still do 
+    # a good job of representing the point cloud as a whole.
+    # Create a VoxelGrid filter object for our input point cloud
     vox = filtered_cloud.make_voxel_grid_filter()
-    LEAF_SIZE = 0.005  # TODO: Try 0.001 or 0.005, 0.01
+    # Choose a voxel (also known as leaf) size
+    # Note: this (1) is a poor choice of leaf size   
+    # Experiment and find the appropriate size!
+    LEAF_SIZE = 0.01  # TODO: Try 0.001 or 0.005, 0.01
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
+    # Call the filter function to obtain the resultant downsampled point cloud
     cloud_voxel = vox.filter()
 
-    # TODO: PassThrough Filter
+    # PassThrough Filter vertical
+    # If you have some prior information about the location of your target
+    # in the scene,you can apply a Pass Through Filter to remove useless data
+    # from your point cloud.
+    # The Pass Through Filter works much like a cropping tool, which allows you 
+    # to crop any given 3D point cloud by specifying an axis with 
+    # cut-off values along that axis.
+    # Create a PassThrough filter object:
     passthrough = cloud_voxel.make_passthrough_filter()
     filter_axis = 'z'
     passthrough.set_filter_field_name(filter_axis)
-    axis_min = 0.6 # TODO: try different values 0.76
+    axis_min = 0.6 # TODO: try different values 0.7
     axis_max = 1.3 # 1.1
     passthrough.set_filter_limits(axis_min, axis_max)
-    # Finally use the filter function to obtain the resultant point cloud. 
     cloud_passthrough = passthrough.filter()
 
-    # TODO: PassThrough Filter 2!
+    # PassThrough Filter horizontal
+    # It is needed cause we get objects that dont excist
     passthrough = cloud_passthrough.make_passthrough_filter()
     filter_axis = 'y'
     passthrough.set_filter_field_name(filter_axis)
-    axis_min = -0.5 # TODO: try different values 0.76
-    axis_max = 0.5 # 1.1
+    axis_min = -0.5 # TODO: better 0.4? No it removes part of of objects 
+    axis_max = 0.5 
     passthrough.set_filter_limits(axis_min, axis_max)
-    # Finally use the filter function to obtain the resultant point cloud. 
     cloud_passthrough = passthrough.filter()
 
 
 
-    # TODO: RANSAC Plane Segmentation
+    # RANSAC Plane Segmentation
     # Create the segmentation object
     seg = cloud_passthrough.make_segmenter()
     # Set the model you wish to fit 
@@ -102,11 +118,11 @@ def pcl_callback(pcl_msg):
     # Call the segment function to obtain set of inlier indices and model coefficients
     inliers, coefficients = seg.segment()
 
-    # TODO: Extract inliers and outliers
+    # Extract inliers and outliers
     cloud_table = cloud_passthrough.extract(inliers, negative=False)
     cloud_objects = cloud_passthrough.extract(inliers, negative=True)
 
-    # TODO: Euclidean Clustering
+    # Euclidean Clustering
     # Use only spatial information:
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
     tree = white_cloud.make_kdtree()
@@ -124,7 +140,7 @@ def pcl_callback(pcl_msg):
     # Extract indices for each of the discovered clusters
     cluster_indices = ec.Extract()
 
-    # TODO: Create Cluster-Mask Point Cloud to visualize each cluster separately
+    # Create Cluster-Mask Point Cloud to visualize each cluster separately
     cluster_color = get_color_list(len(cluster_indices))
     color_cluster_point_list = []  
 
@@ -134,17 +150,17 @@ def pcl_callback(pcl_msg):
                                              white_cloud[indice][1],
                                              white_cloud[indice][2],
                                              rgb_to_float(cluster_color[j])])
-
-    #Create new cloud containing all clusters, each with unique color
+ 
+    # Create new cloud containing all clusters, each with unique color
     cluster_cloud = pcl.PointCloud_PointXYZRGB()
     cluster_cloud.from_list(color_cluster_point_list)
 
-    # TODO: Convert PCL data to ROS messages
+    # Convert PCL data to ROS messages
     ros_msg_table = pcl_to_ros(cloud_table)
     ros_msg_objects = pcl_to_ros(cloud_objects)
     ros_cluster_cloud = pcl_to_ros(cluster_cloud)
 
-    # TODO: Publish ROS messages
+    # Publish ROS messages
     pcl_objects_pub.publish(ros_msg_objects)
     pcl_table_pub.publish(ros_msg_table)
     pcl_cluster_pub.publish(ros_cluster_cloud)
@@ -162,14 +178,16 @@ def pcl_callback(pcl_msg):
     for index, pts_list in enumerate(cluster_indices):
         # Grab the points for the cluster from the extracted outliers (cloud_objects)
         pcl_cluster = cloud_objects.extract(pts_list)
-        # TODO: convert the cluster from pcl to ROS using helper function
+        # Convert the cluster from pcl to ROS using helper function
         ros_cluster = pcl_to_ros(pcl_cluster)
+
         # Extract histogram features
-        # TODO: complete this step just as is covered in capture_features.py
         chists = compute_color_histograms(ros_cluster, using_hsv=True)
+        #chists_rgb = compute_color_histograms(ros_cluster, using_hsv=False)
         normals = get_normals(ros_cluster)
         nhists = compute_normal_histograms(normals)
         feature = np.concatenate((chists, nhists))
+        #feature = np.concatenate((feature_1, chists_rgb))
         # Make the prediction, retrieve the label for the result
         # and add it to detected_objects_labels list
         prediction = clf.predict(scaler.transform(feature.reshape(1,-1)))
@@ -293,7 +311,7 @@ def pr2_mover(object_list):
    
         # TODO: Change these depending on the world chosen
         test_scene_num = Int32()
-        test_scene_num.data = 3
+        test_scene_num.data = 2
 
         # Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
         yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
@@ -305,6 +323,7 @@ def pr2_mover(object_list):
         # Wait for 'pick_place_routine' service to come up
         rospy.wait_for_service('pick_place_routine')
 
+        # It is not needed for yaml creation
         #try:
         #    pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
