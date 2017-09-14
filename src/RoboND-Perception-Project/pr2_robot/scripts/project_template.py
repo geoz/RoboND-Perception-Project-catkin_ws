@@ -56,7 +56,7 @@ def pcl_callback(pcl_msg):
     
     # Statistical Outlier Filtering
     cloud_outlier_filter = cloud.make_statistical_outlier_filter()
-    cloud_outlier_filter.set_mean_k(20) # TODO: try other values
+    cloud_outlier_filter.set_mean_k(10) # TODO: try other values
     cloud_outlier_filter.set_std_dev_mul_thresh(0.5)
     filtered_cloud = cloud_outlier_filter.filter()
 
