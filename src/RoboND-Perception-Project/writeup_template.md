@@ -35,7 +35,10 @@ You're reading it!
 
 ### Exercise 1, 2 and 3 pipeline implemented
 #### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
-I followed the instructions from the lessons. I only tweaked the parameters like:
+#### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
+#### 3. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
+
+For the three exercises I followed the instructions from the lessons. I only tweaked the parameters:
 for voxel:
 LEAF_SIZE = 0.01
 for passthrough:
@@ -46,13 +49,7 @@ max_distance = 0.01
 
 The results were as expected.
 
-#### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
-#### 3. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
-
-Again I followed the steps from the lessons. Parts of the exercises 2 and 3 were used in the project so I will comment them bellow.
-
-
-![demo-1](https://user-images.githubusercontent.com/20687560/28748231-46b5b912-7467-11e7-8778-3095172b7b19.png)
+Because a large part of the exerices was used in the project I will comment them bellow.
 
 ### Pick and Place Setup
 
@@ -75,6 +72,12 @@ In the same file I tried different training set sizes: 15, 20, 25, 50 and 100. I
 
 ![image1] (images/accuracy.png)
 
+For 15 iterations, 32bin size I got 78.3% accuracy.
+For 50 iterations with 64bin size I got 80%.
+For 20 iterations with RGB colorspace included I got 81.25%.
+For 100 iteration with RGB colorspace included and 64bin size I got 90%.
+
+
 The features I decided to use where:
 
 1. color histogram on the hsv colorspace : chists = compute_color_histograms(sample_cloud, using_hsv=True)
@@ -85,8 +88,10 @@ The features I decided to use where:
 I also tried including both the hsv and rgb colorspaces in the same feature vector but the accuracy was only imporving around 3% and I didn't think it was worth it.
 
 
-In features.py file I used 32bins for the histogram creation. I also triede 64 but even though the accuracy was better, in the project the object recognition was worse.
+In features.py file I used 32bins for the histogram creation. I also tried 64 bins but even though the accuracy was better, the object recognition in the project was worse.
 The range of color histogram was (0,256) and for normals histogram (-1,1).
+
+
 
 
 
