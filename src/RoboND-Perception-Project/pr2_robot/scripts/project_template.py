@@ -57,7 +57,7 @@ def pcl_callback(pcl_msg):
     # Statistical Outlier Filtering
     cloud_outlier_filter = cloud.make_statistical_outlier_filter()
     cloud_outlier_filter.set_mean_k(20) # TODO: try other values
-    cloud_outlier_filter.set_std_dev_mul_thresh(0.3)
+    cloud_outlier_filter.set_std_dev_mul_thresh(0.5)
     filtered_cloud = cloud_outlier_filter.filter()
 
     # TODO: remove this!!!
@@ -71,7 +71,7 @@ def pcl_callback(pcl_msg):
     # Choose a voxel (also known as leaf) size
     # Note: this (1) is a poor choice of leaf size   
     # Experiment and find the appropriate size!
-    LEAF_SIZE = 0.005  # TODO: Try 0.001 or 0.005, 0.01
+    LEAF_SIZE = 0.005  # TODO: Try 0.001 or 0.005, ( 0.01 doesnt work)
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     # Call the filter function to obtain the resultant downsampled point cloud
     cloud_voxel = vox.filter()
