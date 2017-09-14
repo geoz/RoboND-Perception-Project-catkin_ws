@@ -46,7 +46,7 @@ if __name__ == '__main__':
         print(j)
         j += 1
 
-        for i in range(20):
+        for i in range(50):
             print(i)
             # make five attempts to get a valid a point cloud then give up
             sample_was_good = False

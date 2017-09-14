@@ -61,7 +61,7 @@ def pcl_callback(pcl_msg):
     filtered_cloud = cloud_outlier_filter.filter()
 
     # TODO: remove this!!!
-    filtered_cloud = cloud
+#    filtered_cloud = cloud
 
     # Voxel Grid Downsampling
     # Decrease resolution for faster calculations, but it should still do 
@@ -71,7 +71,7 @@ def pcl_callback(pcl_msg):
     # Choose a voxel (also known as leaf) size
     # Note: this (1) is a poor choice of leaf size   
     # Experiment and find the appropriate size!
-    LEAF_SIZE = 0.01  # TODO: Try 0.001 or 0.005, 0.01
+    LEAF_SIZE = 0.005  # TODO: Try 0.001 or 0.005, 0.01
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     # Call the filter function to obtain the resultant downsampled point cloud
     cloud_voxel = vox.filter()
@@ -132,9 +132,15 @@ def pcl_callback(pcl_msg):
     # as well as minimum and maximum cluster size (in points)
     # NOTE: These are poor choices of clustering parameters
     # Your task is to experiment and find values that work for segmenting objects.
+
     ec.set_ClusterTolerance(0.015) # TODO: try different values (0.05, 50, 500000)
     ec.set_MinClusterSize(20)
     ec.set_MaxClusterSize(3000)
+
+#    ec.set_ClusterTolerance(0.05)
+#    ec.set_MinClusterSize(50)
+#    ec.set_MaxClusterSize(500000)
+
     # Search the k-d tree for clusters
     ec.set_SearchMethod(tree)
     # Extract indices for each of the discovered clusters
@@ -183,13 +189,19 @@ def pcl_callback(pcl_msg):
 
         # Extract histogram features
         chists = compute_color_histograms(ros_cluster, using_hsv=True)
+        
+	# TODO: RGB
         #chists_rgb = compute_color_histograms(ros_cluster, using_hsv=False)
+
         normals = get_normals(ros_cluster)
         nhists = compute_normal_histograms(normals)
         feature = np.concatenate((chists, nhists))
-        #feature = np.concatenate((feature_1, chists_rgb))
+        
+	# TODO: RGB
+        #feature = np.concatenate((feature, chists_rgb))
         # Make the prediction, retrieve the label for the result
         # and add it to detected_objects_labels list
+
         prediction = clf.predict(scaler.transform(feature.reshape(1,-1)))
         label = encoder.inverse_transform(prediction)[0]
         detected_objects_labels.append(label)
@@ -311,7 +323,7 @@ def pr2_mover(object_list):
    
         # TODO: Change these depending on the world chosen
         test_scene_num = Int32()
-        test_scene_num.data = 2
+        test_scene_num.data = 3
 
         # Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
         yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
