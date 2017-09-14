@@ -60,8 +60,6 @@ def pcl_callback(pcl_msg):
     cloud_outlier_filter.set_std_dev_mul_thresh(1.0)
     filtered_cloud = cloud_outlier_filter.filter()
 
-    # TODO: remove this!!!
-#    filtered_cloud = cloud
 
     # Voxel Grid Downsampling
     # Decrease resolution for faster calculations, but it should still do 
@@ -88,7 +86,7 @@ def pcl_callback(pcl_msg):
     filter_axis = 'z'
     passthrough.set_filter_field_name(filter_axis)
     axis_min = 0.6 # TODO: try different values 0.7
-    axis_max = 1.3 # 1.1
+    axis_max = 1.4 # 1.1
     passthrough.set_filter_limits(axis_min, axis_max)
     cloud_passthrough = passthrough.filter()
 
